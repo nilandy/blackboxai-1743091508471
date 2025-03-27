@@ -1,0 +1,5 @@
+nsetools==2.0.1
+yfinance==0.2.18
+flask==2.2.2
+pandas==1.5.3
+sqlite3
