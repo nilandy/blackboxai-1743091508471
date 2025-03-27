@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NSE Stock Data Fetcher</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .stock-card {
+            transition: all 0.3s;
+        }
+        .stock-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .last-updated {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .export-btn {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">NSE Stock Data</h1>
+        
+        <div class="search-container">
+            <div class="row">
+                <div class="col-md-8">
+                    <form method="get" action="/" class="d-flex">
+                        <input type="text" class="form-control me-2" name="search" 
+                               placeholder="Search by symbol or name..." value="{{ search_query }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                        <a href="/export" class="btn btn-success export-btn">
+                            <i class="fas fa-file-export"></i> Export CSV
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for stock in stocks %}
+            <div class="col-md-4 mb-4">
+                <div class="card stock-card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ stock.symbol }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ stock.name }}</h6>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="last-updated">
+                                {% if stock.last_updated %}
+                                Last updated: {{ stock.last_updated }}
+                                {% else %}
+                                Not fetched yet
+                                {% endif %}
+                            </span>
+                            <button class="btn btn-sm btn-primary fetch-btn" 
+                                    data-symbol="{{ stock.symbol }}">
+                                <i class="fas fa-sync-alt"></i> Fetch Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.fetch-btn').click(function() {
+                const symbol = $(this).data('symbol');
+                const btn = $(this);
+                
+                btn.prop('disabled', true);
+                btn.html('<i class="fas fa-spinner fa-spin"></i> Fetching...');
+                
+                fetch(`/fetch/${symbol}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.status === 'success') {
+                            btn.html('<i class="fas fa-check"></i> Done');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            alert('Error: ' + data.message);
+                            btn.html('<i class="fas fa-sync-alt"></i> Fetch Data');
+                            btn.prop('disabled', false);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Failed to fetch data');
+                        btn.html('<i class="fas fa-sync-alt"></i> Fetch Data');
+                        btn.prop('disabled', false);
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
